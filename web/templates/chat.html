@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Chat</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/ws.js"></script>
+  </head>
+  <body>
+    <h1>CHAT</h1>
+    <div hx-ext="ws" ws-connect="/room" hx-swap="innerHTML">
+      <form id="form" ws-send>
+        <input name="msg" />
+        <button type="submit">send</button>
+      </form>
+      <!-- will be appended to #notifications div -->
+      <div id="notifications">New Message received</div>
+    </div>
+  </body>
+</html>

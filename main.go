@@ -18,10 +18,6 @@ import (
 //go:embed web/templates/*
 var templatesFS embed.FS
 
-type Template struct {
-	templates *template.Template
-}
-
 func run(
 	ctx context.Context,
 	stderr io.Writer,

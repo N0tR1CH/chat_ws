@@ -9,7 +9,7 @@ vet: fmt
 	go vet ./...
 
 build: vet
-	go build .
+	go build -o chat
 
 run: build
 	./chat_ws
