@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"embed"
 	"errors"
+	"html/template"
 	"io"
 	"log/slog"
 	"net"
@@ -13,6 +15,13 @@ import (
 	"time"
 )
 
+//go:embed web/templates/*
+var templatesFS embed.FS
+
+type Template struct {
+	templates *template.Template
+}
+
 func run(
 	ctx context.Context,
 	stderr io.Writer,
@@ -22,8 +31,15 @@ func run(
 
 	config := Config{Host: "", Port: "3000"}
 
+	parsedFS, err := template.ParseFS(templatesFS, "web/templates/*.html")
+	templates := template.Must(parsedFS, err)
+	if err != nil {
+		slog.Error("error parsing html templates", "err", err.Error())
+	}
+
 	srv := NewServer(
 		NewSlogLogger(stderr),
+		templates,
 	)
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort(config.Host, config.Port),
