@@ -21,6 +21,7 @@ type room struct {
 	join    chan *client
 	leave   chan *client
 	clients map[*client]bool
+	done    chan struct{}
 }
 
 func newRoom() *room {
@@ -44,15 +45,25 @@ func (r *room) run() {
 			for client := range r.clients {
 				client.send <- msg
 			}
+		case <-r.done:
+			close(r.forward)
+			close(r.join)
+			close(r.leave)
+			close(r.done)
 		}
 	}
 }
 
 func handleRoomWs(logger Logger) http.Handler {
-	room := newRoom()
-	go room.run()
+	rooms := make(map[string]*room)
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			num := r.URL.Query().Get("num")
+			if _, ok := rooms[num]; !ok {
+				rooms[num] = newRoom()
+				go rooms[num].run()
+			}
+
 			socket, err := upgrader.Upgrade(w, r, nil)
 			if err != nil {
 				logger.Error("websocket connection was not possible", "err", err.Error())
@@ -61,11 +72,17 @@ func handleRoomWs(logger Logger) http.Handler {
 			client := &client{
 				socket: socket,
 				send:   make(chan []byte, socketBufferSize),
-				room:   room,
+				room:   rooms[num],
 			}
-			room.join <- client
+			rooms[num].join <- client
 			defer func() {
-				room.leave <- client
+				rooms[num].leave <- client
+				logger.Info("handleRoomWs - Closing Room", "roomNumber", num)
+				// Below must be a channel
+				if len(rooms[num].clients) == 0 {
+					rooms[num].done <- struct{}{}
+					logger.Info("handleRoomWs - Closing Room", "roomNumber", num)
+				}
 			}()
 			go client.write()
 			client.read()
