@@ -9,7 +9,12 @@
   </head>
   <body>
     <h1>CHAT</h1>
-    <div hx-ext="ws" ws-connect="/room" hx-swap="innerHTML">
+    <div
+      hx-ext="ws"
+      ws-connect="/room"
+      hx-swap="innerHTML"
+      hx-vals='{"val": "Something"}'
+    >
       <form id="form" ws-send>
         <input name="msg" />
         <button type="submit">send</button>
